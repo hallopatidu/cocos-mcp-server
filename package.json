@@ -5,6 +5,9 @@
     "version": "1.4.0",
     "author": "LiDaxian",
     "editor": ">=3.8.6",
+    "bin": {
+        "cocos-mcp-bridge": "./dist/stdio-bridge.js"
+    },
     "scripts": {
         "preinstall": "node ./scripts/preinstall.js",
         "build": "tsc",

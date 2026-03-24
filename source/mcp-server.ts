@@ -210,18 +210,20 @@ export class MCPServer {
         
         req.on('end', async () => {
             try {
-                // Enhanced JSON parsing with better error handling
                 let message;
+                let messageId = null;
                 try {
                     message = JSON.parse(body);
+                    messageId = message.id;
                 } catch (parseError: any) {
-                    // Try to fix common JSON issues
+                    // Try to fix common JSON issues (but be careful)
                     const fixedBody = this.fixCommonJsonIssues(body);
                     try {
                         message = JSON.parse(fixedBody);
+                        messageId = message.id;
                         console.log('[MCPServer] Fixed JSON parsing issue');
                     } catch (secondError) {
-                        throw new Error(`JSON parsing failed: ${parseError.message}. Original body: ${body.substring(0, 500)}...`);
+                        throw new Error(`JSON parsing failed: ${parseError.message}`);
                     }
                 }
                 
@@ -230,10 +232,20 @@ export class MCPServer {
                 res.end(JSON.stringify(response));
             } catch (error: any) {
                 console.error('Error handling MCP request:', error);
+                
+                // Try to extract ID from body even if parse failed
+                let extractedId = null;
+                try {
+                    const match = body.match(/"id"\s*:\s*([^,}]+)/);
+                    if (match && match[1]) {
+                        extractedId = JSON.parse(match[1].trim());
+                    }
+                } catch (e) {}
+
                 res.writeHead(400);
                 res.end(JSON.stringify({
                     jsonrpc: '2.0',
-                    id: null,
+                    id: extractedId,
                     error: {
                         code: -32700,
                         message: `Parse error: ${error.message}`
@@ -299,12 +311,8 @@ export class MCPServer {
         fixed = fixed
             // Fix unescaped quotes in strings
             .replace(/([^\\])"([^"]*[^\\])"([^,}\]:])/g, '$1\\"$2\\"$3')
-            // Fix unescaped backslashes
-            .replace(/([^\\])\\([^"\\\/bfnrt])/g, '$1\\\\$2')
             // Fix trailing commas
             .replace(/,(\s*[}\]])/g, '$1')
-            // Fix single quotes (should be double quotes)
-            .replace(/'/g, '"')
             // Fix common control characters
             .replace(/\n/g, '\\n')
             .replace(/\r/g, '\\r')
