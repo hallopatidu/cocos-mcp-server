@@ -6,7 +6,7 @@ import { createApp, App, defineComponent, ref, computed, onMounted, watch, nextT
 
 const panelDataMap = new WeakMap<any, App>();
 
-// 定义工具配置接口
+// Định nghĩa interface cho cấu hình công cụ (ToolConfig)
 interface ToolConfig {
     category: string;
     name: string;
@@ -14,7 +14,7 @@ interface ToolConfig {
     description: string;
 }
 
-// 定义配置接口
+// Định nghĩa interface cho cấu hình (Configuration)
 interface Configuration {
     id: string;
     name: string;
@@ -24,7 +24,7 @@ interface Configuration {
     updatedAt: string;
 }
 
-// 定义服务器设置接口
+// Định nghĩa interface cho cài đặt máy chủ (ServerSettings)
 interface ServerSettings {
     port: number;
     autoStart: boolean;
@@ -52,13 +52,13 @@ module.exports = Editor.Panel.define({
             const app = createApp({});
             app.config.compilerOptions.isCustomElement = (tag) => tag.startsWith('ui-');
             
-            // 创建主应用组件
+            // Tạo component ứng dụng chính
             app.component('McpServerApp', defineComponent({
                 setup() {
-                    // 响应式数据
+                    // Dữ liệu reactive
                     const activeTab = ref('server');
                     const serverRunning = ref(false);
-                    const serverStatus = ref('已停止');
+                    const serverStatus = ref('Đã dừng');
                     const connectedClients = ref(0);
                     const httpUrl = ref('');
                     const isProcessing = ref(false);
@@ -75,7 +75,7 @@ module.exports = Editor.Panel.define({
                     
 
                     
-                    // 计算属性
+                    // Thuộc tính computed
                     const statusClass = computed(() => ({
                         'status-running': serverRunning.value,
                         'status-stopped': !serverRunning.value
@@ -89,7 +89,7 @@ module.exports = Editor.Panel.define({
                     
                     const settingsChanged = ref(false);
                     
-                    // 方法
+                    // Các phương thức
                     const switchTab = (tabName: string) => {
                         activeTab.value = tabName;
                         if (tabName === 'tools') {
@@ -102,7 +102,7 @@ module.exports = Editor.Panel.define({
                             if (serverRunning.value) {
                                 await Editor.Message.request('cocos-mcp-server', 'stop-server');
                             } else {
-                                // 启动服务器时使用当前面板设置
+                                // Sử dụng cài đặt hiện tại của bảng điều khiền khi khởi động máy chủ
                                 const currentSettings = {
                                     port: settings.value.port,
                                     autoStart: settings.value.autoStart,
@@ -120,7 +120,7 @@ module.exports = Editor.Panel.define({
                     
                     const saveSettings = async () => {
                         try {
-                            // 创建一个简单的对象，避免克隆错误
+                            // Tạo một đối tượng đơn giản để tránh lỗi clone
                             const settingsData = {
                                 port: settings.value.port,
                                 autoStart: settings.value.autoStart,
@@ -149,11 +149,11 @@ module.exports = Editor.Panel.define({
                         try {
                             const result = await Editor.Message.request('cocos-mcp-server', 'getToolManagerState');
                             if (result && result.success) {
-                                // 总是加载后端状态，确保数据是最新的
+                                // Luôn tải trạng thái từ backend để đảm bảo dữ liệu mới nhất
                                 availableTools.value = result.availableTools || [];
                                 console.log('[Vue App] Loaded tools:', availableTools.value.length);
                                 
-                                // 更新工具分类
+                                // Cập nhật phân loại công cụ
                                 const categories = new Set(availableTools.value.map(tool => tool.category));
                                 toolCategories.value = Array.from(categories);
                             }
@@ -166,19 +166,19 @@ module.exports = Editor.Panel.define({
                         try {
                             console.log('[Vue App] updateToolStatus called:', category, name, enabled);
                             
-                            // 先更新本地状态
+                            // Cập nhật trạng thái cục bộ trước
                             const toolIndex = availableTools.value.findIndex(t => t.category === category && t.name === name);
                             if (toolIndex !== -1) {
                                 availableTools.value[toolIndex].enabled = enabled;
-                                // 强制触发响应式更新
+                                // Ép buộc kích hoạt cập nhật reactive
                                 availableTools.value = [...availableTools.value];
                                 console.log('[Vue App] Local state updated, tool enabled:', availableTools.value[toolIndex].enabled);
                             }
                             
-                            // 调用后端更新
+                            // Gọi backend để cập nhật
                             const result = await Editor.Message.request('cocos-mcp-server', 'updateToolStatus', category, name, enabled);
                             if (!result || !result.success) {
-                                // 如果后端更新失败，回滚本地状态
+                                // Nếu cập nhật backend thất bại, hoàn tác trạng thái cục bộ
                                 if (toolIndex !== -1) {
                                     availableTools.value[toolIndex].enabled = !enabled;
                                     availableTools.value = [...availableTools.value];
@@ -188,7 +188,7 @@ module.exports = Editor.Panel.define({
                                 console.log('[Vue App] Backend update successful');
                             }
                         } catch (error) {
-                            // 如果发生错误，回滚本地状态
+                            // Nếu xảy ra lỗi, hoàn tác trạng thái cục bộ
                             const toolIndex = availableTools.value.findIndex(t => t.category === category && t.name === name);
                             if (toolIndex !== -1) {
                                 availableTools.value[toolIndex].enabled = !enabled;
@@ -200,7 +200,7 @@ module.exports = Editor.Panel.define({
                     
                     const selectAllTools = async () => {
                         try {
-                            // 直接更新本地状态，然后保存
+                            // Cập nhật trạng thái cục bộ trực tiếp, sau đó lưu
                             availableTools.value.forEach(tool => tool.enabled = true);
                             await saveChanges();
                         } catch (error) {
@@ -210,7 +210,7 @@ module.exports = Editor.Panel.define({
                     
                     const deselectAllTools = async () => {
                         try {
-                            // 直接更新本地状态，然后保存
+                            // Cập nhật trạng thái cục bộ trực tiếp, sau đó lưu
                             availableTools.value.forEach(tool => tool.enabled = false);
                             await saveChanges();
                         } catch (error) {
@@ -220,7 +220,7 @@ module.exports = Editor.Panel.define({
                     
                                         const saveChanges = async () => {
                         try {
-                            // 创建普通对象，避免Vue3响应式对象克隆错误
+                            // Tạo đối tượng thông thường để tránh lỗi clone đối tượng reactive của Vue3
                             const updates = availableTools.value.map(tool => ({
                                 category: String(tool.category),
                                 name: String(tool.name),
@@ -243,7 +243,7 @@ module.exports = Editor.Panel.define({
                     
                     const toggleCategoryTools = async (category: string, enabled: boolean) => {
                         try {
-                            // 直接更新本地状态，然后保存
+                            // Cập nhật trạng thái cục bộ trực tiếp, sau đó lưu
                             availableTools.value.forEach(tool => {
                                 if (tool.category === category) {
                                     tool.enabled = enabled;
@@ -261,20 +261,20 @@ module.exports = Editor.Panel.define({
                     
                     const getCategoryDisplayName = (category: string): string => {
                         const categoryNames: { [key: string]: string } = {
-                            'scene': '场景工具',
-                            'node': '节点工具',
-                            'component': '组件工具',
-                            'prefab': '预制体工具',
-                            'project': '项目工具',
-                            'debug': '调试工具',
-                            'preferences': '偏好设置工具',
-                            'server': '服务器工具',
-                            'broadcast': '广播工具',
-                            'sceneAdvanced': '高级场景工具',
-                            'sceneView': '场景视图工具',
-                            'referenceImage': '参考图片工具',
-                            'assetAdvanced': '高级资源工具',
-                            'validation': '验证工具'
+                            'scene': 'Công cụ cảnh (Scene)',
+                            'node': 'Công cụ nút (Node)',
+                            'component': 'Công cụ thành phần (Component)',
+                            'prefab': 'Công cụ Prefab',
+                            'project': 'Công cụ dự án',
+                            'debug': 'Công cụ gỡ lỗi (Debug)',
+                            'preferences': 'Công cụ Tùy chỉnh (Preferences)',
+                            'server': 'Công cụ máy chủ',
+                            'broadcast': 'Công cụ quảng bá (Broadcast)',
+                            'sceneAdvanced': 'Công cụ cảnh nâng cao',
+                            'sceneView': 'Công cụ xem cảnh',
+                            'referenceImage': 'Công cụ hình ảnh tham chiếu',
+                            'assetAdvanced': 'Công cụ tài nguyên nâng cao',
+                            'validation': 'Công cụ xác thực'
                         };
                         return categoryNames[category] || category;
                     };
@@ -283,19 +283,19 @@ module.exports = Editor.Panel.define({
                     
 
                     
-                    // 监听设置变化
+                    // Theo dõi thay đổi cài đặt
                     watch(settings, () => {
                         settingsChanged.value = true;
                     }, { deep: true });
                     
 
                     
-                    // 组件挂载时加载数据
+                    // Tải dữ liệu khi component được mount
                     onMounted(async () => {
-                        // 加载工具管理器状态
+                        // Tải trạng thái trình quản lý công cụ
                         await loadToolManagerState();
                         
-                        // 从服务器状态获取设置信息
+                        // Lấy thông tin cài đặt từ trạng thái máy chủ
                         try {
                             const serverStatus = await Editor.Message.request('cocos-mcp-server', 'get-server-status');
                             if (serverStatus && serverStatus.settings) {
@@ -307,7 +307,7 @@ module.exports = Editor.Panel.define({
                                 };
                                 console.log('[Vue App] Server settings loaded from status:', serverStatus.settings);
                             } else if (serverStatus && serverStatus.port) {
-                                // 兼容旧版本，只获取端口信息
+                                // Tương thích với phiên bản cũ, chỉ lấy thông tin cổng
                                 settings.value.port = serverStatus.port;
                                 console.log('[Vue App] Port loaded from server status:', serverStatus.port);
                             }
@@ -316,13 +316,13 @@ module.exports = Editor.Panel.define({
                             console.log('[Vue App] Using default server settings');
                         }
                         
-                        // 定期更新服务器状态
+                        // Định kỳ cập nhật trạng thái máy chủ
                         setInterval(async () => {
                             try {
                                 const result = await Editor.Message.request('cocos-mcp-server', 'get-server-status');
                                 if (result) {
                                     serverRunning.value = result.running;
-                                    serverStatus.value = result.running ? '运行中' : '已停止';
+                                    serverStatus.value = result.running ? 'Đang chạy' : 'Đã dừng';
                                     connectedClients.value = result.clients || 0;
                                     httpUrl.value = result.running ? `http://localhost:${result.port}` : '';
                                     isProcessing.value = false;
@@ -334,7 +334,7 @@ module.exports = Editor.Panel.define({
                     });
                     
                     return {
-                        // 数据
+                        // Dữ liệu
                         activeTab,
                         serverRunning,
                         serverStatus,
@@ -346,13 +346,13 @@ module.exports = Editor.Panel.define({
                         toolCategories,
                         settingsChanged,
                         
-                        // 计算属性
+                        // Thuộc tính computed
                         statusClass,
                         totalTools,
                         enabledTools,
                         disabledTools,
                         
-                        // 方法
+                        // Các phương thức
                         switchTab,
                         toggleServer,
                         saveSettings,
