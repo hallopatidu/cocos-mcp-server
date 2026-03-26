@@ -6,7 +6,7 @@
     "author": "LiDaxian",
     "editor": ">=3.8.6",
     "bin": {
-        "cocos-mcp-bridge": "./dist/stdio-bridge.js"
+        "cocos-mcp": "./dist/main.js"
     },
     "scripts": {
         "preinstall": "node ./scripts/preinstall.js",

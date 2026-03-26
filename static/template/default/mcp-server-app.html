@@ -1,0 +1,127 @@
+<div class="mcp-app">
+    <!-- Điều hướng tab -->
+    <div class="tab-navigation">
+        <button class="tab-button" :class="{ active: activeTab === 'server' }" @click="switchTab('server')">
+            <span>Máy chủ</span>
+        </button>
+        <button class="tab-button" :class="{ active: activeTab === 'tools' }" @click="switchTab('tools')">
+            <span>Quản lý công cụ</span>
+        </button>
+    </div>
+    
+    <!-- Tab Máy chủ -->
+    <div class="tab-content" v-show="activeTab === 'server'">
+        <section class="server-status">
+            <h3>Trạng thái máy chủ</h3>
+            <div class="status-info">
+                <ui-prop>
+                    <ui-label slot="label">Trạng thái</ui-label>
+                    <ui-label slot="content" class="status-value" :class="statusClass">{{ serverStatus }}</ui-label>
+                </ui-prop>
+                <ui-prop v-if="serverRunning">
+                    <ui-label slot="label">Số lượng kết nối</ui-label>
+                    <ui-label slot="content">{{ connectedClients }}</ui-label>
+                </ui-prop>
+            </div>
+        </section>
+
+        <section class="server-controls">
+            <ui-button @click="toggleServer" :disabled="isProcessing" class="primary">
+                {{ serverRunning ? 'Dừng máy chủ' : 'Khởi động máy chủ' }}
+            </ui-button>
+        </section>
+
+        <section class="server-settings">
+            <!-- Cài đặt máy chủ -->
+            <h3>Cài đặt máy chủ</h3>
+            <ui-prop>
+                <ui-label slot="label">Cổng</ui-label>
+                <ui-num-input slot="content" v-model="settings.port" :min="1024" :max="65535" :step="1" :disabled="serverRunning">
+                </ui-num-input>
+            </ui-prop>
+            <ui-prop>
+                <ui-label slot="label">Tự động khởi động</ui-label>
+                <ui-checkbox slot="content" v-model="settings.autoStart"></ui-checkbox>
+            </ui-prop>
+            <ui-prop>
+                <ui-label slot="label">Log debug</ui-label>
+                <ui-checkbox slot="content" v-model="settings.debugLog"></ui-checkbox>
+            </ui-prop>
+            <ui-prop>
+                <ui-label slot="label">Số lượng kết nối tối đa</ui-label>
+                <ui-num-input slot="content" v-model="settings.maxConnections" :min="1" :max="100" :step="1">
+                </ui-num-input>
+            </ui-prop>
+        </section>
+
+        <section class="server-info" v-if="serverRunning">
+            <h3>Thông tin kết nối</h3>
+            <div class="connection-details">
+                <ui-prop>
+                    <ui-label slot="label">URL HTTP</ui-label>
+                    <ui-input slot="content" :value="httpUrl" readonly>
+                        <ui-button slot="suffix" @click="copyUrl">Sao chép</ui-button>
+                    </ui-input>
+                </ui-prop>
+            </div>
+        </section>
+
+        <footer>
+            <ui-button @click="saveSettings" :disabled="!settingsChanged">Lưu cài đặt</ui-button>
+        </footer>
+    </div>
+    
+    <!-- Tab Quản lý công cụ -->
+    <div class="tab-content" v-show="activeTab === 'tools'">
+        <section class="tool-manager">
+            <div class="tool-manager-header">
+                <h3>Quản lý công cụ</h3>
+            </div>
+            
+            <div class="tools-section">
+                <div class="tools-section-header">
+                    <div class="tools-section-title">
+                        <h4>Công cụ có sẵn</h4>
+                        <div class="tools-stats">
+                            {{ totalTools }} công cụ
+                            ({{ enabledTools }} bật / {{ disabledTools }} tắt)
+                        </div>
+                    </div>
+                    <div class="tools-section-controls">
+                        <ui-button @click="selectAllTools" class="small">Chọn tất cả</ui-button>
+                        <ui-button @click="deselectAllTools" class="small">Bỏ chọn tất cả</ui-button>
+                        <ui-button @click="saveChanges" class="primary">Lưu thay đổi</ui-button>
+                    </div>
+                </div>
+                
+                <div class="tools-container">
+                    <div v-for="category in toolCategories" :key="category" class="tool-category">
+                        <div class="category-header">
+                            <h5>{{ getCategoryDisplayName(category) }}</h5>
+                            <div class="category-controls">
+                                <ui-button @click="toggleCategoryTools(category, true)" class="small">Chọn tất cả</ui-button>
+                                <ui-button @click="toggleCategoryTools(category, false)" class="small">Bỏ chọn tất cả</ui-button>
+                            </div>
+                        </div>
+                        <div class="tool-items">
+                            <div v-for="tool in getToolsByCategory(category)" :key="tool.name" class="tool-item">
+                                <ui-checkbox 
+                                    :value="tool.enabled"
+                                    @change="(event) => updateToolStatus(category, tool.name, event.target.checked)"
+                                ></ui-checkbox>
+                                <div class="tool-info">
+                                    <div class="tool-name">{{ tool.name }}</div>
+                                    <div class="tool-description">{{ tool.description }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+
+        </section>
+    </div>
+</div>
+
+ 

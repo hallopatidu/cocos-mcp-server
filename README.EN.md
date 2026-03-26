@@ -147,46 +147,47 @@ Cocos store: https://store.cocos.com/app/detail/7941
 
 ## Quick Usage
 
-**Claude CLI configuration:**
+**Claude Desktop Configuration:**
 
-```
-claude mcp add --transport http cocos-creator http://127.0.0.1:3000/mcp (use your configured port number)
-```
+The plugin now supports a **Direct Stdio Protocol** via an integrated bridge. No external scripts are required.
 
-**Claude client configuration:**
+**Option 1: Using the `cocos-mcp` command (Recommended)**
+1. Open a terminal in the `extensions/cocos-mcp-server` directory.
+2. Run the following commands:
+   ```powershell
+   npm run build
+   npm link
+   ```
+3. Add this configuration to your `%APPDATA%\Claude\claude_desktop_config.json`:
 
-```
+```json
 {
-
   "mcpServers": {
-
-		"cocos-creator": {
-
- 		"type": "http",
-
-		"url": "http://127.0.0.1:3000/mcp"
-
-		 }
-
-	  }
-
-}
-```
-
-**Cursor or VS class MCP configuration**
-
-```
-{
-
-  "mcpServers": { 
-
-   "cocos-creator": {
-      "url": "http://localhost:3000/mcp"
-   }
+    "cocos": {
+      "command": "cocos-mcp"
+    }
   }
-
 }
 ```
+
+**Option 2: Using Absolute Path (Most stable on Windows)**
+If `npm link` fails or the command is not found, use the absolute path to `main.js`:
+
+```json
+{
+  "mcpServers": {
+    "cocos": {
+      "command": "node",
+      "args": [
+        "C:\\Path\\To\\extensions\\cocos-mcp-server\\dist\\main.js"
+      ]
+    }
+  }
+}
+```
+*(Note: Use double backslashes `\\` for the path and replace it with your actual directory path)*
+
+The latest version has switched to **TCP/Readline** instead of raw HTTP to improve performance and stability.
 
 ## Features
 
@@ -308,18 +309,18 @@ npm run build
 
 1. Open the MCP Server panel from `Extension > Cocos MCP Server`
 2. Configure settings:
-   - **Port**: HTTP server port (default: 3000)
+   - **Port**: TCP server port (default: 3000)
    - **Auto Start**: Automatically start server when editor opens
    - **Debug Logging**: Enable detailed logging for development
    - **Max Connections**: Maximum concurrent connections allowed
 
-3. Click "Start Server" to begin accepting connections
+3. Click "Start Server" to begin accepting connections from the bridge
 
 ### Connecting AI Assistants
 
-The server exposes an HTTP endpoint at `http://localhost:3000/mcp` (or your configured port).
-
-AI assistants can connect using the MCP protocol and access all available tools.
+The server exposes a TCP port at `127.0.0.1:3000` (or your configured port).
+The integrated bridge in `main.js` handles the translation between Stdio (for Claude) and TCP (for the extension).
+A AI assistant can connect using the MCP protocol via the bridge.
 
 
 ## Development

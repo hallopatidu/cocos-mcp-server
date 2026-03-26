@@ -146,63 +146,47 @@ Cocos Store: https://store.cocos.com/app/detail/7941
 
 ## Sử dụng nhanh
 
-**Cấu hình Claude Desktop (Khuyên dùng):**
+**Cấu hình Claude Desktop:**
 
-Do Claude Desktop yêu cầu giao thức `stdio` hoặc `sse`, bạn nên sử dụng script cầu nối (bridge) đi kèm. Bạn có thể chọn một trong hai cách cấu hình sau:
+Hiện tại, Plugin đã hỗ trợ **Giao thức Stdio trực tiếp** thông qua một Bridge tích hợp sẵn. Bạn không cần cài đặt thêm script ngoài.
 
-**Cách 1: Sử dụng lệnh dán tiếp (Gọn nhất, khuyên dùng)**
+**Cách 1: Sử dụng lệnh `cocos-mcp` (Khuyên dùng)**
 1. Mở terminal tại thư mục `extensions/cocos-mcp-server`.
-2. Chạy lệnh: `npm link`
+2. Chạy lệnh: 
+   ```powershell
+   npm run build
+   npm link
+   ```
 3. Thêm cấu hình này vào file `%APPDATA%\Claude\claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "cocos-creator": {
-      "command": "cocos-mcp-bridge",
-      "args": [
-        "http://127.0.0.1:3000/mcp"
-      ]
+    "cocos": {
+      "command": "cocos-mcp"
     }
   }
 }
 ```
 
-**Cách 2: Sử dụng đường dẫn trực tiếp (Nếu không muốn npm link)**
-Thêm cấu hình này vào file `%APPDATA%\Claude\claude_desktop_config.json`:
+**Cách 2: Sử dụng đường dẫn trực tiếp (Ổn định nhất trên Windows)**
+Nếu `npm link` gặp lỗi, hãy sử dụng đường dẫn tuyệt đối tới tệp `main.js`:
 
 ```json
 {
   "mcpServers": {
-    "cocos-creator": {
+    "cocos": {
       "command": "node",
       "args": [
-        "C:/Projects/Research/CocosMCP/extensions/cocos-mcp-server/dist/stdio-bridge.js",
-        "http://127.0.0.1:3000/mcp"
+        "C:\\Đường\\Dẫn\\Đến\\extensions\\cocos-mcp-server\\dist\\main.js"
       ]
     }
   }
 }
 ```
-*(Lưu ý: Thay đổi đường dẫn đến file `stdio-bridge.js` cho đúng với thư mục trên máy bạn)*
+*(Lưu ý: Đảm bảo sử dụng dấu xuyệt kép `\\` và thay đổi đường dẫn cho đúng với máy của bạn)*
 
-**Cấu hình Cursor hoặc các IDE hỗ trợ HTTP MCP:**
-
-```json
-{
-  "mcpServers": {
-    "cocos-creator": {
-      "url": "http://localhost:3000/mcp"
-    }
-  }
-}
-```
-
-**Cấu hình Claude CLI:**
-
-```bash
-claude mcp add --transport http cocos-creator http://127.0.0.1:3000/mcp
-```
+Bản cập nhật mới nhất đã chuyển sang sử dụng **TCP/Readline** thay vì HTTP thuần túy để tăng hiệu suất và độ ổn định. Cursor vẫn có thể kết nối thông qua Bridge nếu cần, nhưng khuyên dùng Stdio (trực tiếp qua lệnh hoặc node).
 
 ## Các tính năng
 
@@ -324,12 +308,12 @@ npm run build
 
 1. Mở bảng điều khiển MCP Server từ `Extension > Cocos MCP Server`.
 2. Cấu hình cài đặt:
-   - **Cổng (Port)**: Cổng máy chủ HTTP (mặc định: 3000).
+   - **Cổng (Port)**: Cổng máy chủ TCP (mặc định: 3000).
    - **Tự động khởi động (Auto Start)**: Tự động khởi động máy chủ khi trình biên tập khởi động.
    - **Log Debug**: Bật nhật ký chi tiết để phục vụ phát triển và gỡ lỗi.
    - **Số kết nối tối đa (Max Connections)**: Số lượng kết nối đồng thời tối đa được phép.
 
-3. Nhấp vào "Khởi động máy chủ" để bắt đầu chấp nhận kết nối.
+3. Nhấp vào "Khởi động máy chủ" để bắt đầu chấp nhận kết nối từ Bridge.
 
 ### Kết nối với Trợ lý AI
 
