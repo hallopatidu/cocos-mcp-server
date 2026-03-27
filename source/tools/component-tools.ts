@@ -3,6 +3,28 @@ import { ToolDefinition, ToolResponse, ToolExecutor, ComponentInfo } from '../ty
 export class ComponentTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOLS (v1.5.0) ---
+            {
+                name: 'component_action',
+                description: 'Unified tool for component management: add, remove, get info, set properties, or attach scripts.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['add', 'remove', 'list', 'info', 'set_property', 'attach_script', 'available_types'],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'add_component',
                 description: 'Add a component to a specific node. IMPORTANT: You must provide the nodeUuid parameter to specify which node to add the component to.',
@@ -184,6 +206,11 @@ export class ComponentTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOLS ---
+            case 'component_action':
+                return await this.executeComponentAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'add_component':
                 return await this.addComponent(args.nodeUuid, args.componentType);
             case 'remove_component':
@@ -200,6 +227,27 @@ export class ComponentTools implements ToolExecutor {
                 return await this.getAvailableComponents(args.category);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeComponentAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'add':
+                return await this.addComponent(params.nodeUuid, params.componentType);
+            case 'remove':
+                return await this.removeComponent(params.nodeUuid, params.componentType);
+            case 'list':
+                return await this.getComponents(params.nodeUuid);
+            case 'info':
+                return await this.getComponentInfo(params.nodeUuid, params.componentType);
+            case 'set_property':
+                return await this.setComponentProperty(params);
+            case 'attach_script':
+                return await this.attachScript(params.nodeUuid, params.scriptPath);
+            case 'available_types':
+                return await this.getAvailableComponents(params.category || 'all');
+            default:
+                throw new Error(`Unknown component_action action: ${action}`);
         }
     }
 

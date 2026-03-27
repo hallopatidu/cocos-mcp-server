@@ -3,6 +3,32 @@ import { ToolDefinition, ToolResponse, ToolExecutor, PrefabInfo } from '../types
 export class PrefabTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOLS (v1.5.0) ---
+            {
+                name: 'prefab_action',
+                description: 'Unified tool for prefab management: create, instantiate, update, revert, or query prefabs.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: [
+                                'create', 'instantiate', 'update', 'revert', 
+                                'duplicate', 'restore_node', 'list', 'info', 
+                                'load', 'validate'
+                            ],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'get_prefab_list',
                 description: 'Get all prefabs in the project',
@@ -185,6 +211,11 @@ export class PrefabTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOLS ---
+            case 'prefab_action':
+                return await this.executePrefabAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'get_prefab_list':
                 return await this.getPrefabList(args.folder);
             case 'load_prefab':
@@ -207,6 +238,33 @@ export class PrefabTools implements ToolExecutor {
                 return await this.restorePrefabNode(args.nodeUuid, args.assetUuid);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executePrefabAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'create':
+                return await this.createPrefab(params);
+            case 'instantiate':
+                return await this.instantiatePrefab(params);
+            case 'update':
+                return await this.updatePrefab(params.prefabPath, params.nodeUuid);
+            case 'revert':
+                return await this.revertPrefab(params.nodeUuid);
+            case 'duplicate':
+                return await this.duplicatePrefab(params);
+            case 'restore_node':
+                return await this.restorePrefabNode(params.nodeUuid, params.assetUuid);
+            case 'list':
+                return await this.getPrefabList(params.folder);
+            case 'info':
+                return await this.getPrefabInfo(params.prefabPath);
+            case 'load':
+                return await this.loadPrefab(params.prefabPath);
+            case 'validate':
+                return await this.validatePrefab(params.prefabPath);
+            default:
+                throw new Error(`Unknown prefab_action action: ${action}`);
         }
     }
 

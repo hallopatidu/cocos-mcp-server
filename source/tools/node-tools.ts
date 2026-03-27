@@ -5,6 +5,66 @@ export class NodeTools implements ToolExecutor {
     private componentTools = new ComponentTools();
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOLS (v1.5.0) ---
+            {
+                name: 'node_lifecycle',
+                description: 'Unified tool for node lifecycle management: create, delete, duplicate, or move nodes.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['create', 'delete', 'duplicate', 'move'],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+            {
+                name: 'node_query',
+                description: 'Unified tool for querying node information, finding nodes, or searching hierarchies.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['info', 'find', 'list', 'detect'],
+                            description: 'Action: info (get details), find (search by pattern), list (get all), detect (2D/3D analysis)'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the query'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+            {
+                name: 'node_transform',
+                description: 'Unified tool for setting node transforms (position, rotation, scale) or other properties.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['transform', 'property'],
+                            description: 'Action: transform (set pos/rot/scale), property (set any property)'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the operation (e.g. uuid, position, property, value)'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+            
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'create_node',
                 description: 'Create a new node in the scene. Supports creating empty nodes, nodes with components, or instantiating from assets (prefabs, etc.). IMPORTANT: You should always provide parentUuid to specify where to create the node.',
@@ -279,6 +339,15 @@ export class NodeTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOLS ---
+            case 'node_lifecycle':
+                return await this.executeNodeLifecycle(args.action, args.params);
+            case 'node_query':
+                return await this.executeNodeQuery(args.action, args.params);
+            case 'node_transform':
+                return await this.executeNodeTransform(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'create_node':
                 return await this.createNode(args);
             case 'get_node_info':
@@ -303,6 +372,47 @@ export class NodeTools implements ToolExecutor {
                 return await this.detectNodeType(args.uuid);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeNodeLifecycle(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'create':
+                return await this.createNode(params);
+            case 'delete':
+                return await this.deleteNode(params.uuid);
+            case 'duplicate':
+                return await this.duplicateNode(params.uuid, params.includeChildren || true);
+            case 'move':
+                return await this.moveNode(params.nodeUuid, params.newParentUuid, params.siblingIndex || -1);
+            default:
+                throw new Error(`Unknown node_lifecycle action: ${action}`);
+        }
+    }
+
+    private async executeNodeQuery(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'info':
+                return await this.getNodeInfo(params.uuid);
+            case 'find':
+                return await this.findNodes(params.pattern, params.exactMatch || false);
+            case 'list':
+                return await this.getAllNodes();
+            case 'detect':
+                return await this.detectNodeType(params.uuid);
+            default:
+                throw new Error(`Unknown node_query action: ${action}`);
+        }
+    }
+
+    private async executeNodeTransform(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'transform':
+                return await this.setNodeTransform(params);
+            case 'property':
+                return await this.setNodeProperty(params.uuid, params.property, params.value);
+            default:
+                throw new Error(`Unknown node_transform action: ${action}`);
         }
     }
 

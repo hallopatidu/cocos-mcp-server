@@ -3,6 +3,31 @@ import { ToolDefinition, ToolResponse, ToolExecutor } from '../types';
 export class ServerTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOL (v1.5.0) ---
+            {
+                name: 'server_action',
+                description: 'Unified tool for server management: IP query, port information, and status check.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: [
+                                'query_ip', 'query_sorted_ip', 'query_port', 
+                                'get_status', 'check_connectivity', 'get_network'
+                            ],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'query_server_ip_list',
                 description: 'Query server IP list',
@@ -62,6 +87,11 @@ export class ServerTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOL ---
+            case 'server_action':
+                return await this.executeServerAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'query_server_ip_list':
                 return await this.queryServerIPList();
             case 'query_sorted_server_ip_list':
@@ -76,6 +106,25 @@ export class ServerTools implements ToolExecutor {
                 return await this.getNetworkInterfaces();
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeServerAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'query_ip':
+                return await this.queryServerIPList();
+            case 'query_sorted_ip':
+                return await this.querySortedServerIPList();
+            case 'query_port':
+                return await this.queryServerPort();
+            case 'get_status':
+                return await this.getServerStatus();
+            case 'check_connectivity':
+                return await this.checkServerConnectivity(params?.timeout);
+            case 'get_network':
+                return await this.getNetworkInterfaces();
+            default:
+                throw new Error(`Unknown server_action action: ${action}`);
         }
     }
 

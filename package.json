@@ -42,7 +42,7 @@
         }
     },
     "contributions": {
-                "menu": [
+        "menu": [
             {
                 "path": "i18n:menu.extension/Cocos MCP Server",
                 "label": "i18n:cocos-mcp-server.open_panel",

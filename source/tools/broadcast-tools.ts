@@ -10,6 +10,28 @@ export class BroadcastTools implements ToolExecutor {
 
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOL (v1.5.0) ---
+            {
+                name: 'broadcast_action',
+                description: 'Unified tool for broadcast message management: logs, listening, and active listeners.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['get_log', 'listen', 'stop', 'clear', 'get_active'],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'get_broadcast_log',
                 description: 'Get recent broadcast messages log',
@@ -77,6 +99,11 @@ export class BroadcastTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOL ---
+            case 'broadcast_action':
+                return await this.executeBroadcastAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'get_broadcast_log':
                 return await this.getBroadcastLog(args.limit, args.messageType);
             case 'listen_broadcast':
@@ -89,6 +116,23 @@ export class BroadcastTools implements ToolExecutor {
                 return await this.getActiveListeners();
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeBroadcastAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'get_log':
+                return await this.getBroadcastLog(params.limit, params.messageType);
+            case 'listen':
+                return await this.listenBroadcast(params.messageType);
+            case 'stop':
+                return await this.stopListening(params.messageType);
+            case 'clear':
+                return await this.clearBroadcastLog();
+            case 'get_active':
+                return await this.getActiveListeners();
+            default:
+                throw new Error(`Unknown broadcast_action action: ${action}`);
         }
     }
 

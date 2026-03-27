@@ -3,6 +3,31 @@ import { ToolDefinition, ToolResponse, ToolExecutor } from '../types';
 export class PreferencesTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOL (v1.5.0) ---
+            {
+                name: 'preference_action',
+                description: 'Unified tool for preference management: query, set, reset, and export/import.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: [
+                                'open_settings', 'query', 'set', 'get_all', 
+                                'reset', 'export', 'import'
+                            ],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'open_preferences_settings',
                 description: 'Open preferences settings panel',
@@ -132,6 +157,11 @@ export class PreferencesTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOL ---
+            case 'preference_action':
+                return await this.executePreferenceAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'open_preferences_settings':
                 return await this.openPreferencesSettings(args.tab, args.args);
             case 'query_preferences_config':
@@ -148,6 +178,27 @@ export class PreferencesTools implements ToolExecutor {
                 return await this.importPreferences(args.importPath);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executePreferenceAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'open_settings':
+                return await this.openPreferencesSettings(params.tab, params.args);
+            case 'query':
+                return await this.queryPreferencesConfig(params.name, params.path, params.type);
+            case 'set':
+                return await this.setPreferencesConfig(params.name, params.path, params.value, params.type);
+            case 'get_all':
+                return await this.getAllPreferences();
+            case 'reset':
+                return await this.resetPreferences(params.name, params.type);
+            case 'export':
+                return await this.exportPreferences(params.exportPath);
+            case 'import':
+                return await this.importPreferences(params.importPath);
+            default:
+                throw new Error(`Unknown preference_action action: ${action}`);
         }
     }
 

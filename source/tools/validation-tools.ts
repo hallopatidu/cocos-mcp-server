@@ -3,6 +3,28 @@ import { ToolDefinition, ToolResponse, ToolExecutor } from '../types';
 export class ValidationTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOL (v1.5.0) ---
+            {
+                name: 'validation_action',
+                description: 'Unified tool for parameter validation and formatting: JSON fix, safe strings, and request formatting.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['validate_json', 'safe_string', 'format_request'],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'validate_json_params',
                 description: 'Validate and fix JSON parameters before sending to other tools',
@@ -58,6 +80,11 @@ export class ValidationTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOL ---
+            case 'validation_action':
+                return await this.executeValidationAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'validate_json_params':
                 return await this.validateJsonParams(args.jsonString, args.expectedSchema);
             case 'safe_string_value':
@@ -66,6 +93,19 @@ export class ValidationTools implements ToolExecutor {
                 return await this.formatMcpRequest(args.toolName, args.arguments);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeValidationAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'validate_json':
+                return await this.validateJsonParams(params.jsonString, params.expectedSchema);
+            case 'safe_string':
+                return await this.createSafeStringValue(params.value);
+            case 'format_request':
+                return await this.formatMcpRequest(params.toolName, params.arguments);
+            default:
+                throw new Error(`Unknown validation_action action: ${action}`);
         }
     }
 

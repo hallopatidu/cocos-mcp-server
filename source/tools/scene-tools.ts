@@ -3,6 +3,28 @@ import { ToolDefinition, ToolResponse, ToolExecutor, SceneInfo } from '../types'
 export class SceneTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOLS (v1.5.0) ---
+            {
+                name: 'scene_action',
+                description: 'Unified tool for scene management: open, save, create, and hierarchy query.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['get_current', 'list', 'open', 'save', 'save_as', 'create', 'close', 'hierarchy'],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'get_current_scene',
                 description: 'Get current scene information',
@@ -100,6 +122,11 @@ export class SceneTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOLS ---
+            case 'scene_action':
+                return await this.executeSceneAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'get_current_scene':
                 return await this.getCurrentScene();
             case 'get_scene_list':
@@ -118,6 +145,29 @@ export class SceneTools implements ToolExecutor {
                 return await this.getSceneHierarchy(args.includeComponents);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeSceneAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'get_current':
+                return await this.getCurrentScene();
+            case 'list':
+                return await this.getSceneList();
+            case 'open':
+                return await this.openScene(params.scenePath);
+            case 'save':
+                return await this.saveScene();
+            case 'save_as':
+                return await this.saveSceneAs(params.path);
+            case 'create':
+                return await this.createScene(params.sceneName, params.savePath);
+            case 'close':
+                return await this.closeScene();
+            case 'hierarchy':
+                return await this.getSceneHierarchy(params.includeComponents);
+            default:
+                throw new Error(`Unknown scene_action action: ${action}`);
         }
     }
 

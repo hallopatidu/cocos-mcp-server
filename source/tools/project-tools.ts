@@ -5,6 +5,55 @@ import * as path from 'path';
 export class ProjectTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOLS (v1.5.0) ---
+            {
+                name: 'project_action',
+                description: 'Unified tool for project-level operations: run, build, info, and settings.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: [
+                                'run', 'build', 'get_info', 'get_settings', 
+                                'open_build_panel', 'check_builder_status', 
+                                'start_preview', 'stop_preview'
+                            ],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+            {
+                name: 'asset_action',
+                description: 'Unified tool for asset management: create, delete, move, copy, search, and metadata query.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: [
+                                'create', 'delete', 'move', 'copy', 'save', 
+                                'reimport', 'refresh', 'import', 'get_info', 
+                                'get_list', 'query_path', 'query_uuid', 'query_url', 'find'
+                            ],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'run_project',
                 description: 'Run the project in preview mode',
@@ -393,6 +442,13 @@ export class ProjectTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOLS ---
+            case 'project_action':
+                return await this.executeProjectAction(args.action, args.params);
+            case 'asset_action':
+                return await this.executeAssetAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'run_project':
                 return await this.runProject(args.platform);
             case 'build_project':
@@ -443,6 +499,66 @@ export class ProjectTools implements ToolExecutor {
                 return await this.getAssetDetails(args.assetPath, args.includeSubAssets);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeProjectAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'run':
+                return await this.runProject(params.platform);
+            case 'build':
+                return await this.buildProject(params);
+            case 'get_info':
+                return await this.getProjectInfo();
+            case 'get_settings':
+                return await this.getProjectSettings(params.category);
+            case 'open_build_panel':
+                return await this.openBuildPanel();
+            case 'check_builder_status':
+                return await this.checkBuilderStatus();
+            case 'start_preview':
+                return await this.startPreviewServer(params.port);
+            case 'stop_preview':
+                return await this.stopPreviewServer();
+            default:
+                throw new Error(`Unknown project_action action: ${action}`);
+        }
+    }
+
+    private async executeAssetAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'create':
+                return await this.createAsset(params.url, params.content, params.overwrite);
+            case 'delete':
+                return await this.deleteAsset(params.url);
+            case 'move':
+                return await this.moveAsset(params.source, params.target, params.overwrite);
+            case 'copy':
+                return await this.copyAsset(params.source, params.target, params.overwrite);
+            case 'save':
+                return await this.saveAsset(params.url, params.content);
+            case 'reimport':
+                return await this.reimportAsset(params.url);
+            case 'refresh':
+                return await this.refreshAssets(params.folder);
+            case 'import':
+                return await this.importAsset(params.sourcePath, params.targetFolder);
+            case 'get_info':
+                return await this.getAssetInfo(params.assetPath);
+            case 'get_list':
+                return await this.getAssets(params.type, params.folder);
+            case 'query_path':
+                return await this.queryAssetPath(params.url);
+            case 'query_uuid':
+                return await this.queryAssetUuid(params.url);
+            case 'query_url':
+                return await this.queryAssetUrl(params.uuid);
+            case 'find':
+                return await this.findAssetByName(params);
+            case 'get_details':
+                return await this.getAssetDetails(params.assetPath, params.includeSubAssets);
+            default:
+                throw new Error(`Unknown asset_action action: ${action}`);
         }
     }
 

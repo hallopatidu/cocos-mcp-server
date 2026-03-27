@@ -3,6 +3,32 @@ import { ToolDefinition, ToolResponse, ToolExecutor } from '../types';
 export class ReferenceImageTools implements ToolExecutor {
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOL (v1.5.0) ---
+            {
+                name: 'reference_image_action',
+                description: 'Unified tool for reference image management: add, remove, switch, and transform properties.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: [
+                                'add', 'remove', 'switch', 'set_data', 
+                                'query_config', 'query_current', 'refresh', 
+                                'set_pos', 'set_scale', 'set_opacity', 'list', 'clear'
+                            ],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'add_reference_image',
                 description: 'Add reference image(s) to scene',
@@ -169,6 +195,11 @@ export class ReferenceImageTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOL ---
+            case 'reference_image_action':
+                return await this.executeReferenceImageAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'add_reference_image':
                 return await this.addReferenceImage(args.paths);
             case 'remove_reference_image':
@@ -195,6 +226,37 @@ export class ReferenceImageTools implements ToolExecutor {
                 return await this.clearAllReferenceImages();
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeReferenceImageAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'add':
+                return await this.addReferenceImage(params.paths);
+            case 'remove':
+                return await this.removeReferenceImage(params.paths);
+            case 'switch':
+                return await this.switchReferenceImage(params.path, params.sceneUUID);
+            case 'set_data':
+                return await this.setReferenceImageData(params.key, params.value);
+            case 'query_config':
+                return await this.queryReferenceImageConfig();
+            case 'query_current':
+                return await this.queryCurrentReferenceImage();
+            case 'refresh':
+                return await this.refreshReferenceImage();
+            case 'set_pos':
+                return await this.setReferenceImagePosition(params.x, params.y);
+            case 'set_scale':
+                return await this.setReferenceImageScale(params.sx, params.sy);
+            case 'set_opacity':
+                return await this.setReferenceImageOpacity(params.opacity);
+            case 'list':
+                return await this.listReferenceImages();
+            case 'clear':
+                return await this.clearAllReferenceImages();
+            default:
+                throw new Error(`Unknown reference_image_action action: ${action}`);
         }
     }
 

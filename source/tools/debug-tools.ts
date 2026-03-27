@@ -31,6 +31,50 @@ export class DebugTools implements ToolExecutor {
 
     getTools(): ToolDefinition[] {
         return [
+            // --- NEW UNIFIED TOOLS (v1.5.0) ---
+            {
+                name: 'debug_action',
+                description: 'Unified tool for debugging: console logs, script execution, node tree, performance, and scene validation.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: [
+                                'get_console_logs', 'clear_console', 'execute_script', 
+                                'get_node_tree', 'get_perf_stats', 'validate_scene', 'get_editor_info'
+                            ],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+            {
+                name: 'log_action',
+                description: 'Unified tool for project log management: read, info, and search.',
+                inputSchema: {
+                    type: 'object',
+                    properties: {
+                        action: {
+                            type: 'string',
+                            enum: ['read', 'info', 'search'],
+                            description: 'Action to perform'
+                        },
+                        params: {
+                            type: 'object',
+                            description: 'Parameters for the specific action'
+                        }
+                    },
+                    required: ['action', 'params']
+                }
+            },
+
+            // --- LEGACY INDIVIDUAL TOOLS (Keep for backward compatibility) ---
             {
                 name: 'get_console_logs',
                 description: 'Get editor console logs',
@@ -193,6 +237,13 @@ export class DebugTools implements ToolExecutor {
 
     async execute(toolName: string, args: any): Promise<ToolResponse> {
         switch (toolName) {
+            // --- NEW UNIFIED TOOLS ---
+            case 'debug_action':
+                return await this.executeDebugAction(args.action, args.params);
+            case 'log_action':
+                return await this.executeLogAction(args.action, args.params);
+
+            // --- LEGACY TOOLS ---
             case 'get_console_logs':
                 return await this.getConsoleLogs(args.limit, args.filter);
             case 'clear_console':
@@ -215,6 +266,40 @@ export class DebugTools implements ToolExecutor {
                 return await this.searchProjectLogs(args.pattern, args.maxResults, args.contextLines);
             default:
                 throw new Error(`Unknown tool: ${toolName}`);
+        }
+    }
+
+    private async executeDebugAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'get_console_logs':
+                return await this.getConsoleLogs(params.limit, params.filter);
+            case 'clear_console':
+                return await this.clearConsole();
+            case 'execute_script':
+                return await this.executeScript(params.script);
+            case 'get_node_tree':
+                return await this.getNodeTree(params.rootUuid, params.maxDepth);
+            case 'get_perf_stats':
+                return await this.getPerformanceStats();
+            case 'validate_scene':
+                return await this.validateScene(params);
+            case 'get_editor_info':
+                return await this.getEditorInfo();
+            default:
+                throw new Error(`Unknown debug_action action: ${action}`);
+        }
+    }
+
+    private async executeLogAction(action: string, params: any): Promise<ToolResponse> {
+        switch (action) {
+            case 'read':
+                return await this.getProjectLogs(params.lines, params.filterKeyword, params.logLevel);
+            case 'info':
+                return await this.getLogFileInfo();
+            case 'search':
+                return await this.searchProjectLogs(params.pattern, params.maxResults, params.contextLines);
+            default:
+                throw new Error(`Unknown log_action action: ${action}`);
         }
     }
 
