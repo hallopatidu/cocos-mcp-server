@@ -438,5 +438,3 @@ Bật Log Debug trong bảng điều khiển plugin để nhận nhật ký thao
 
 Plugin này được cung cấp cho các dự án Cocos Creator sử dụng, và mã nguồn được đóng gói cùng nhau, có thể dùng để học tập và trao đổi. Không mã hóa. Hỗ trợ bạn tự phát triển và tối ưu hóa thêm. Mọi mã nguồn của dự án này hoặc mã nguồn phái sinh đều không được sử dụng cho bất kỳ mục đích thương mại hoặc bán lại nào. Nếu cần sử dụng cho mục đích thương mại, vui lòng liên hệ với tôi.
 
-## Liên hệ với tôi để gia nhập nhóm
-<img alt="image" src="https://github.com/user-attachments/assets/a276682c-4586-480c-90e5-6db132e89e0f" width="400" height="400" />
